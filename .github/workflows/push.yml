@@ -1,0 +1,61 @@
+name: Release
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push request events but only for the master branch
+  push:    
+    tags: '**'
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  release:
+    name: Build and push docker image followed by release
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      #Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+      
+      #- name: Set up Docker Buildx
+      #  uses: docker/setup-buildx-action@v1
+      
+      #- uses: olegtarasov/get-tag@v2
+      #  id: tagName
+      #- name: printtag
+      #  run: echo ${{ env.GIT_TAG_NAME }}
+      
+      - id: version
+        uses: pozetroninc/github-action-get-latest-release@master
+        with:
+          owner: node-red 
+          repo:  node-red-docker
+          excludes: prerelease, draft
+
+      - name: printoutput and prepare short version for tag
+        run: |
+          echo ${{ steps.version.outputs.release }}
+          SHORTVERSION=$(echo ${{steps.version.outputs.release}} | cut -c 2-)
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USER }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Build and push to Docker Hub
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          build-args: version=$SHORTVERSION
+          tags: pidity/nodered-ha:$SHORTVERSION,pidity/nodered-ha:latest
+          push: true
+
+#      - name: Release
+#        uses: softprops/action-gh-release@v1
+#        with:
+#          name: Update Node-RED to $SHORTVERSION
