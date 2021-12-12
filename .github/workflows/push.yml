@@ -52,8 +52,8 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           context: .
-          build-args: version=$SHORTVERSION
-          tags: pidity/nodered-ha:$SHORTVERSION,pidity/nodered-ha:latest
+          build-args: version=${{ env.SHORTVERSION }}
+          tags: pidity/nodered-ha:${{ env.SHORTVERSION }},pidity/nodered-ha:latest
           push: true
 
 #      - name: Release
